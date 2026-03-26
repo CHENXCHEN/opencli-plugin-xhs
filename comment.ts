@@ -35,7 +35,6 @@ cli({
     }
 
     const navigateUrl = `https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${encodeURIComponent(finalXsecToken)}`;
-    console.log('Navigating to:', navigateUrl);
     await page.goto(navigateUrl);
     await page.wait(3);
     await page.autoScroll({ times: 2 });
@@ -68,7 +67,7 @@ cli({
     try {
       await page.click('#noteContainer button.btn.submit');
     } catch (e) {
-      console.log('Click error:', e.message);
+      // button may already be gone after click
     }
     
     await page.wait(2);
@@ -78,10 +77,9 @@ cli({
     const rows: Row[] = [];
     if (result?.code === 0) {
       rows.push({ type: 'status', value: 'success' });
-      rows.push({ type: 'debug', value: JSON.stringify(result) });
     } else {
       rows.push({ type: 'status', value: 'failed' });
-      rows.push({ type: 'error', value: result?.error || JSON.stringify(result) });
+      rows.push({ type: 'error', value: result?.error || 'unknown' });
     }
     return rows;
   },
@@ -115,6 +113,11 @@ cli({
       rows.push({ type: 'error', value: 'xsec_token is required' });
       return rows;
     }
+
+    await page.goto(`https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${encodeURIComponent(finalXsecToken)}`);
+    await page.wait(3);
+    await page.autoScroll({ times: 2 });
+    await page.wait(1);
 
     const result = await postComment(page, noteId, content, finalXsecToken, commentId);
 
