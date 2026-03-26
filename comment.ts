@@ -22,27 +22,19 @@ cli({
   func: async (page, kwargs) => {
     const noteInput = kwargs['note-id'] as string;
     const content = kwargs.content as string;
-    let xsecToken = (kwargs['xsec-token'] as string) || '';
+    const xsecTokenArg = (kwargs['xsec-token'] as string) || '';
 
-    const { noteId } = parseNoteInput(noteInput);
-    if (!xsecToken) {
-      await page.goto(`https://www.xiaohongshu.com/explore/${noteId}`);
-      await page.wait(3);
-      const url = page.url();
-      try {
-        const parsed = new URL(url);
-        xsecToken = parsed.searchParams.get('xsec_token') || '';
-      } catch {}
-    }
+    const { noteId, xsecToken: xsecTokenFromUrl } = parseNoteInput(noteInput);
+    const finalXsecToken = xsecTokenArg || xsecTokenFromUrl;
 
-    if (!xsecToken) {
+    if (!finalXsecToken) {
       const rows: Row[] = [];
       rows.push({ type: 'status', value: 'error' });
       rows.push({ type: 'error', value: 'xsec_token is required. Please provide full note URL with xsec_token.' });
       return rows;
     }
 
-    const result = await postComment(page, noteId, content, xsecToken);
+    const result = await postComment(page, noteId, content, finalXsecToken);
 
     const rows: Row[] = [];
     if (result?.code === 0 || result?.success !== false) {
@@ -73,27 +65,19 @@ cli({
     const noteInput = kwargs['note-id'] as string;
     const commentId = kwargs['comment-id'] as string;
     const content = kwargs.content as string;
-    let xsecToken = (kwargs['xsec-token'] as string) || '';
+    const xsecTokenArg = (kwargs['xsec-token'] as string) || '';
 
-    const { noteId } = parseNoteInput(noteInput);
-    if (!xsecToken) {
-      await page.goto(`https://www.xiaohongshu.com/explore/${noteId}`);
-      await page.wait(3);
-      const url = page.url();
-      try {
-        const parsed = new URL(url);
-        xsecToken = parsed.searchParams.get('xsec_token') || '';
-      } catch {}
-    }
+    const { noteId, xsecToken: xsecTokenFromUrl } = parseNoteInput(noteInput);
+    const finalXsecToken = xsecTokenArg || xsecTokenFromUrl;
 
-    if (!xsecToken) {
+    if (!finalXsecToken) {
       const rows: Row[] = [];
       rows.push({ type: 'status', value: 'error' });
       rows.push({ type: 'error', value: 'xsec_token is required' });
       return rows;
     }
 
-    const result = await postComment(page, noteId, content, xsecToken, commentId);
+    const result = await postComment(page, noteId, content, finalXsecToken, commentId);
 
     const rows: Row[] = [];
     if (result?.code === 0 || result?.success !== false) {
