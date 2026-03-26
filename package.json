@@ -2,6 +2,9 @@
   "name": "opencli-plugin-xhs",
   "version": "0.1.0",
   "type": "module",
+  "scripts": {
+    "prepare": "cp *.ts ~/.opencli/plugins/xhs/ && for f in api-client auth check-login comment feeds interaction publish url-parser user; do esbuild ~/.opencli/plugins/xhs/${f}.ts --bundle --outfile=~/.opencli/plugins/xhs/${f}.js --format=esm --platform=node '--external:@jackwener/*'; done"
+  },
   "peerDependencies": {
     "@jackwener/opencli": ">=1.0.0"
   }
