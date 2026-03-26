@@ -401,8 +401,8 @@ cli({
             const comments = [];
             const parentComments = document.querySelectorAll('.parent-comment');
             for (const parent of parentComments) {
-              const commentItems = parent.querySelectorAll(':scope > .comment-item');
-              for (const item of commentItems) {
+              const topLevelComments = parent.querySelectorAll(':scope > .comment-item');
+              for (const item of topLevelComments) {
                 if (comments.length >= maxComments) break;
                 const links = item.querySelectorAll('a[href*="/user/profile/"]');
                 let nickname = '[deleted]';
@@ -416,9 +416,32 @@ cli({
                   user: { nickname },
                   content: contentEl?.textContent?.trim() || '',
                   liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
+                  isReply: false,
                 });
               }
               if (comments.length >= maxComments) break;
+              const replyContainers = parent.querySelectorAll(':scope > .reply-container');
+              for (const replyContainer of replyContainers) {
+                const replyItems = replyContainer.querySelectorAll('.comment-item');
+                for (const item of replyItems) {
+                  if (comments.length >= maxComments) break;
+                  const links = item.querySelectorAll('a[href*="/user/profile/"]');
+                  let nickname = '[deleted]';
+                  for (const link of links) {
+                    const text = link.textContent?.trim() || '';
+                    if (text) { nickname = text; break; }
+                  }
+                  const contentEl = item.querySelector('.content');
+                  const likeEl = item.querySelector('.like-count');
+                  comments.push({
+                    user: { nickname },
+                    content: contentEl?.textContent?.trim() || '',
+                    liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
+                    isReply: true,
+                  });
+                }
+                if (comments.length >= maxComments) break;
+              }
             }
             return comments;
           })()
@@ -432,9 +455,10 @@ cli({
           const commentAuthor = comment.user?.nickname || comment.author || '[deleted]';
           const commentContent = comment.content || comment.text || '';
           const commentLikes = comment.liked_count || comment.likeCount || 0;
+          const prefix = comment.isReply ? '↳ ' : '';
           rows.push({
             type: `comment[${i + 1}]`,
-            value: `${commentAuthor}: ${commentContent} (♥ ${commentLikes})`,
+            value: `${prefix}${commentAuthor}: ${commentContent} (♥ ${commentLikes})`,
           });
         }
       }
