@@ -52,16 +52,16 @@ cli({
     
     await page.wait(3);
     
-    await page.evaluate(`
+    const escapedContent = content.replace(/'/g, "\\'");
+    const inputScript = `
       (() => {
         const inputArea = document.querySelector('#content-textarea');
-        if (inputArea) {
-          const text = '${content.replace(/'/g, "\\'")}';
-          inputArea.textContent = text;
-          inputArea.dispatchEvent(new InputEvent('input', { bubbles: true }));
-        }
+        if (!inputArea) return;
+        inputArea.textContent = '${escapedContent}';
+        inputArea.dispatchEvent(new InputEvent('input', { bubbles: true }));
       })()
-    `);
+    `;
+    await page.evaluate(inputScript);
     
     await page.wait(1);
     
