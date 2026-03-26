@@ -343,9 +343,6 @@ cli({
             }
           };
 
-          clickExpandButtons();
-          await new Promise(r => setTimeout(r, 500));
-
           const getNickname = (item) => {
             const links = item.querySelectorAll('a[href*="/user/profile/"]');
             for (const link of links) {
@@ -358,33 +355,41 @@ cli({
           const comments = [];
           const parentComments = document.querySelectorAll('.parent-comment');
 
-          for (const parent of parentComments) {
-            if (comments.length >= maxComments) break;
+          for (let i = 0; i < parentComments.length; i++) {
+            if (comments.filter(c => !c.isReply).length >= maxComments) break;
+            const parent = parentComments[i];
 
             const topLevelItem = parent.querySelector(':scope > .comment-item');
             if (topLevelItem) {
               const nickname = getNickname(topLevelItem);
               const contentEl = topLevelItem.querySelector('.content');
               const likeEl = topLevelItem.querySelector('.like-count');
+              const parentIndex = comments.filter(c => !c.isReply).length + 1;
               comments.push({
                 user: { nickname },
                 content: contentEl?.textContent?.trim() || '',
                 liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
                 isReply: false,
+                parentIndex,
+                subIndex: 0,
               });
             }
 
-            if (comments.length >= maxComments) break;
+            if (comments.filter(c => !c.isReply).length >= maxComments) break;
 
             clickExpandButtons();
             await new Promise(r => setTimeout(r, 300));
+          }
 
+          const topLevelCount = comments.filter(c => !c.isReply).length;
+          for (let i = 0; i < topLevelCount; i++) {
+            const parent = parentComments[i];
             const replyContainer = parent.querySelector(':scope > .reply-container');
             if (replyContainer) {
               const replyItems = replyContainer.querySelectorAll('.comment-item');
-              let subCount = 0;
+              let subIndex = 1;
               for (const item of replyItems) {
-                if (subCount >= maxSubComments) break;
+                if (subIndex > maxSubComments) break;
                 const nickname = getNickname(item);
                 const contentEl = item.querySelector('.content');
                 const likeEl = item.querySelector('.like-count');
@@ -393,25 +398,29 @@ cli({
                   content: contentEl?.textContent?.trim() || '',
                   liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
                   isReply: true,
+                  parentIndex: i + 1,
+                  subIndex: subIndex,
                 });
-                subCount++;
+                subIndex++;
               }
             }
           }
+
           return comments;
         })()
       `);
 
       if (commentsData && Array.isArray(commentsData)) {
-        for (let i = 0; i < commentsData.length; i++) {
-          const comment = commentsData[i];
+        for (const comment of commentsData) {
           const commentAuthor = comment.user?.nickname || comment.author || '[deleted]';
           const commentContent = comment.content || comment.text || '';
           const commentLikes = comment.liked_count || comment.likeCount || 0;
-          const prefix = comment.isReply ? '↳ ' : '';
+          const type = comment.isReply 
+            ? `comment[${comment.parentIndex}.${comment.subIndex}]`
+            : `comment[${comment.parentIndex}]`;
           rows.push({
-            type: `comment[${i + 1}]`,
-            value: `${prefix}${commentAuthor}: ${commentContent} (♥ ${commentLikes})`,
+            type,
+            value: `${commentAuthor}: ${commentContent} (♥ ${commentLikes})`,
           });
         }
       }
