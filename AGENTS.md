@@ -237,13 +237,13 @@ playwright_browser_evaluate(`
 
 ### 4.1 复制并编译
 ```bash
-# 复制 TS 源文件到插件目录
-cp *.ts ~/.opencli/plugins/xhs/
+# 一键复制并编译（推荐）
+npm run prepare
 
-# 编译所有 TS 文件
-cd ~/.opencli/plugins/xhs/
+# 或手动执行
+cp *.ts ~/.opencli/plugins/xhs/
 for f in api-client auth check-login comment feeds interaction publish url-parser user; do
-  esbuild ${f}.ts --bundle --outfile=${f}.js --format=esm --platform=node '--external:@jackwener/*'
+  esbuild ~/.opencli/plugins/xhs/${f}.ts --bundle --outfile=~/.opencli/plugins/xhs/${f}.js --format=esm --platform=node '--external:@jackwener/*'
 done
 ```
 
