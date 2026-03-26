@@ -411,7 +411,14 @@ cli({
       `);
 
       if (commentsData && Array.isArray(commentsData)) {
-        for (const comment of commentsData) {
+        const sortedComments = [...commentsData].sort((a, b) => {
+          if (a.parentIndex !== b.parentIndex) {
+            return a.parentIndex - b.parentIndex;
+          }
+          return a.subIndex - b.subIndex;
+        });
+
+        for (const comment of sortedComments) {
           const commentAuthor = comment.user?.nickname || comment.author || '[deleted]';
           const commentContent = comment.content || comment.text || '';
           const commentLikes = comment.liked_count || comment.likeCount || 0;
