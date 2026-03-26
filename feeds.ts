@@ -223,17 +223,13 @@ cli({
   args: [
     { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL' },
     { name: 'xsec-token', positional: true, required: false, help: 'xsec_token (optional, not needed if note-id is a full URL)' },
-    { name: 'comments', type: 'int', default: 20, help: 'Number of comments to fetch' },
-    { name: 'sub-comments', type: 'int', default: 10, help: 'Number of sub-comments (replies) to load per comment' },
-    { name: 'load-all-comments', type: 'boolean', default: false, help: 'Load all comments via scrolling' },
+    { name: 'comments', type: 'int', default: 20, help: 'Number of comments to fetch (including sub-comments)' },
   ],
   columns: ['type', 'value'],
   func: async (page, kwargs) => {
     const input = kwargs['note-id'] as string;
     const xsecTokenArg = (kwargs['xsec-token'] as string) || '';
     const numComments = Math.max(1, Math.min(100, Number(kwargs.comments ?? 20)));
-    const numSubComments = Math.max(0, Math.min(50, Number(kwargs['sub-comments'] ?? 10)));
-    const loadAllComments = kwargs['load-all-comments'] as boolean;
 
     const { noteId, xsecToken } = parseNoteInput(input);
     const finalXsecToken = xsecToken || xsecTokenArg;
@@ -248,92 +244,9 @@ cli({
     await page.goto(navigateUrl);
     await page.wait(3);
     await page.autoScroll({ times: 2 });
+    await page.wait(1);
 
     const storeData = await readNoteFromStore(page);
-
-    if (loadAllComments && finalXsecToken) {
-      await page.evaluate(async (maxSubComments) => {
-        const scrollToComments = () => {
-          const commentSection = document.querySelector('.comments-container, #comment, .comment-container, [class*="comment"]');
-          if (commentSection) {
-            commentSection.scrollIntoView({ behavior: 'smooth' });
-            return true;
-          }
-          window.scrollBy(0, window.innerHeight * 0.8);
-          return false;
-        };
-
-        const clickShowMore = () => {
-          const buttons = document.querySelectorAll('.show-more, .expand-reply, [class*="show-more-reply"]');
-          let clicked = false;
-          for (const btn of buttons) {
-            const rect = btn.getBoundingClientRect();
-            if (rect.top > 0 && rect.top < window.innerHeight) {
-              (btn as HTMLElement).click();
-              clicked = true;
-            }
-          }
-          return clicked;
-        };
-
-        const clickExpandReplies = () => {
-          const expandButtons = document.querySelectorAll('.reply-container [class*="expand"], .reply-container [class*="show-more"], .reply-container [class*="展开"]');
-          let clicked = false;
-          for (const btn of expandButtons) {
-            const text = btn.textContent || '';
-            if (text.includes('展开') && text.includes('条回复')) {
-              const rect = btn.getBoundingClientRect();
-              if (rect.top > 0 && rect.top < window.innerHeight * 3) {
-                (btn as HTMLElement).click();
-                clicked = true;
-              }
-            }
-          }
-          return clicked;
-        };
-
-        const isAtEnd = () => {
-          const endMarker = document.querySelector('.end-container, .the-end, [class*="end"]');
-          if (endMarker) return true;
-          const noComments = document.querySelector('.no-comments, .empty-comment');
-          if (noComments) return true;
-          return false;
-        };
-
-        scrollToComments();
-        await new Promise(r => setTimeout(r, 1000));
-
-        let stagnantCount = 0;
-        let lastCount = 0;
-
-        for (let i = 0; i < 50; i++) {
-          if (isAtEnd()) break;
-
-          clickShowMore();
-          clickExpandReplies();
-          await new Promise(r => setTimeout(r, 300));
-
-          window.scrollBy(0, window.innerHeight * 0.8);
-          await new Promise(r => setTimeout(r, 500));
-
-          const commentCount = document.querySelectorAll('.parent-comment, .comment-item, .comment').length;
-          if (commentCount === lastCount) {
-            stagnantCount++;
-            if (stagnantCount >= 5) {
-              for (let j = 0; j < 10; j++) {
-                window.scrollBy(0, window.innerHeight);
-                await new Promise(r => setTimeout(r, 200));
-              }
-            }
-            if (stagnantCount >= 10) break;
-          } else {
-            stagnantCount = 0;
-          }
-          lastCount = commentCount;
-        }
-      }, numSubComments);
-      await page.wait(2);
-    }
 
     const domData = await page.evaluate(`
       (() => {
@@ -412,17 +325,35 @@ cli({
     }
 
     if (finalXsecToken) {
-      let commentsData: any[];
-      if (loadAllComments) {
-        commentsData = await page.evaluate(`
-          (() => {
-            const maxComments = ${numComments};
-            const maxSubComments = ${numSubComments};
-            const comments = [];
-            const parentComments = document.querySelectorAll('.parent-comment');
-            for (const parent of parentComments) {
-              const topLevelComments = parent.querySelectorAll(':scope > .comment-item');
-              for (const item of topLevelComments) {
+      const commentsData: any[] = await page.evaluate(`
+        (() => {
+          const maxComments = ${numComments};
+          const comments = [];
+          const parentComments = document.querySelectorAll('.parent-comment');
+          for (const parent of parentComments) {
+            const topLevelComments = parent.querySelectorAll(':scope > .comment-item');
+            for (const item of topLevelComments) {
+              if (comments.length >= maxComments) break;
+              const links = item.querySelectorAll('a[href*="/user/profile/"]');
+              let nickname = '[deleted]';
+              for (const link of links) {
+                const text = link.textContent?.trim() || '';
+                if (text) { nickname = text; break; }
+              }
+              const contentEl = item.querySelector('.content');
+              const likeEl = item.querySelector('.like-count');
+              comments.push({
+                user: { nickname },
+                content: contentEl?.textContent?.trim() || '',
+                liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
+                isReply: false,
+              });
+            }
+            if (comments.length >= maxComments) break;
+            const replyContainers = parent.querySelectorAll(':scope > .reply-container');
+            for (const replyContainer of replyContainers) {
+              const replyItems = replyContainer.querySelectorAll('.comment-item');
+              for (const item of replyItems) {
                 if (comments.length >= maxComments) break;
                 const links = item.querySelectorAll('a[href*="/user/profile/"]');
                 let nickname = '[deleted]';
@@ -436,44 +367,16 @@ cli({
                   user: { nickname },
                   content: contentEl?.textContent?.trim() || '',
                   liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
-                  isReply: false,
-                  subCount: 0,
+                  isReply: true,
                 });
               }
               if (comments.length >= maxComments) break;
-              const replyContainers = parent.querySelectorAll(':scope > .reply-container');
-              let subCommentCount = 0;
-              for (const replyContainer of replyContainers) {
-                if (subCommentCount >= maxSubComments) break;
-                const replyItems = replyContainer.querySelectorAll('.comment-item');
-                for (const item of replyItems) {
-                  if (comments.length >= maxComments) break;
-                  if (subCommentCount >= maxSubComments) break;
-                  const links = item.querySelectorAll('a[href*="/user/profile/"]');
-                  let nickname = '[deleted]';
-                  for (const link of links) {
-                    const text = link.textContent?.trim() || '';
-                    if (text) { nickname = text; break; }
-                  }
-                  const contentEl = item.querySelector('.content');
-                  const likeEl = item.querySelector('.like-count');
-                  comments.push({
-                    user: { nickname },
-                    content: contentEl?.textContent?.trim() || '',
-                    liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
-                    isReply: true,
-                    subCount: subCommentCount + 1,
-                  });
-                  subCommentCount++;
-                }
-              }
             }
-            return comments;
-          })()
-        `);
-      } else {
-        commentsData = await fetchComments(page, noteId, finalXsecToken, numComments);
-      }
+          }
+          return comments;
+        })()
+      `);
+
       if (commentsData && Array.isArray(commentsData)) {
         for (let i = 0; i < commentsData.length; i++) {
           const comment = commentsData[i];
