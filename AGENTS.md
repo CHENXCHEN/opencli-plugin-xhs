@@ -277,6 +277,35 @@ opencli xhs publish      # 发布笔记（需 DOM 操作）
 - 用 `playwright_browser_evaluate` 检查 `__INITIAL_STATE__` 结构
 - 确认是否需要交互触发数据加载
 
+### 4. DOM 操作成功但 Vue 没有响应（如评论输入框、点赞按钮）
+- **问题原因**：XHS 使用 Vue 框架，直接修改 `textContent` 或 `click()` 可能没有触发 Vue 的响应式系统
+- **解决方案**：
+  1. 点击触发元素后需要等待 Vue 激活（如点击"说点什么..."后等待 3 秒）
+  2. 使用 `page.click()` 而不是 `evaluate` 里的 `element.click()`
+  3. 输入内容时使用 `inputArea.textContent = text` + `dispatchEvent(new InputEvent('input', { bubbles: true }))`
+
+### 5. page.evaluate 函数参数形式返回 undefined
+- **问题原因**：opencli 的 `page.evaluate()` 对函数参数支持不完整
+- **解决方案**：使用模板字符串 + IIFE 格式，通过字符串模板注入变量
+
+  ```typescript
+  // ❌ 错误写法
+  const result = await page.evaluate((arg) => {
+    return { value: arg };
+  }, content);
+
+  // ✅ 正确写法
+  const result = await page.evaluate(`
+    (() => {
+      return { value: '${content.replace(/'/g, "\\'")}' };
+    })()
+  `);
+  ```
+
+### 6. 提交按钮点击后无反应
+- **问题原因**：可能需要等待 Vue 状态更新
+- **解决方案**：在关键操作之间添加适当的 `await page.wait()`
+
 ---
 
 ## 文件结构参考
