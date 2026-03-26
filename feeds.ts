@@ -395,34 +395,48 @@ cli({
     if (finalXsecToken) {
       let commentsData: any[];
       if (loadAllComments) {
-        commentsData = await page.evaluate(async (maxComments) => {
-          const comments: any[] = [];
-          const commentEls = document.querySelectorAll('.parent-comment, .comment-item, .comment');
-          for (let i = 0; i < Math.min(commentEls.length, maxComments); i++) {
-            const el = commentEls[i];
-            const contentEl = el.querySelector('.content, .comment-content, [class*="content"]');
-            const userEl = el.querySelector('.user-name, .nickname, [class*="user"]');
-            const likeEl = el.querySelector('.like-count, [class*="like"]');
-            comments.push({
-              content: contentEl?.textContent?.trim() || '',
-              user: { nickname: userEl?.textContent?.trim() || '[deleted]' },
-              liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
-            });
-          }
-          return comments;
-        }, numComments);
+        commentsData = await page.evaluate(`
+          (() => {
+            const maxComments = ${numComments};
+            const comments = [];
+            const parentComments = document.querySelectorAll('.parent-comment');
+            for (const parent of parentComments) {
+              const commentItems = parent.querySelectorAll(':scope > .comment-item');
+              for (const item of commentItems) {
+                if (comments.length >= maxComments) break;
+                const links = item.querySelectorAll('a[href*="/user/profile/"]');
+                let nickname = '[deleted]';
+                for (const link of links) {
+                  const text = link.textContent?.trim() || '';
+                  if (text) { nickname = text; break; }
+                }
+                const contentEl = item.querySelector('.content');
+                const likeEl = item.querySelector('.like-count');
+                comments.push({
+                  user: { nickname },
+                  content: contentEl?.textContent?.trim() || '',
+                  liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
+                });
+              }
+              if (comments.length >= maxComments) break;
+            }
+            return comments;
+          })()
+        `);
       } else {
-        commentsData = await fetchComments(page, noteId, xsecToken, numComments);
+        commentsData = await fetchComments(page, noteId, finalXsecToken, numComments);
       }
-      for (let i = 0; i < commentsData.length; i++) {
-        const comment = commentsData[i];
-        const commentAuthor = comment.user?.nickname || comment.author || '[deleted]';
-        const commentContent = comment.content || comment.text || '';
-        const commentLikes = comment.liked_count || comment.likeCount || 0;
-        rows.push({
-          type: `comment[${i + 1}]`,
-          value: `Author: ${commentAuthor} | Content: ${commentContent} | Likes: ${commentLikes}`,
-        });
+      if (commentsData && Array.isArray(commentsData)) {
+        for (let i = 0; i < commentsData.length; i++) {
+          const comment = commentsData[i];
+          const commentAuthor = comment.user?.nickname || comment.author || '[deleted]';
+          const commentContent = comment.content || comment.text || '';
+          const commentLikes = comment.liked_count || comment.likeCount || 0;
+          rows.push({
+            type: `comment[${i + 1}]`,
+            value: `${commentAuthor}: ${commentContent} (♥ ${commentLikes})`,
+          });
+        }
       }
     } else {
       rows.push({ type: 'comment', value: '(xsec_token required for comments)' });
