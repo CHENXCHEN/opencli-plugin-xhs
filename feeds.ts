@@ -223,13 +223,15 @@ cli({
   args: [
     { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL' },
     { name: 'xsec-token', positional: true, required: false, help: 'xsec_token (optional, not needed if note-id is a full URL)' },
-    { name: 'comments', type: 'int', default: 20, help: 'Number of comments to fetch (including sub-comments)' },
+    { name: 'comments', type: 'int', default: 20, help: 'Number of top-level comments to fetch' },
+    { name: 'sub-comments', type: 'int', default: 10, help: 'Number of sub-comments to load per comment' },
   ],
   columns: ['type', 'value'],
   func: async (page, kwargs) => {
     const input = kwargs['note-id'] as string;
     const xsecTokenArg = (kwargs['xsec-token'] as string) || '';
     const numComments = Math.max(1, Math.min(100, Number(kwargs.comments ?? 20)));
+    const numSubComments = Math.max(0, Math.min(50, Number(kwargs['sub-comments'] ?? 10)));
 
     const { noteId, xsecToken } = parseNoteInput(input);
     const finalXsecToken = xsecToken || xsecTokenArg;
@@ -326,22 +328,44 @@ cli({
 
     if (finalXsecToken) {
       const commentsData: any[] = await page.evaluate(`
-        (() => {
+        (async () => {
           const maxComments = ${numComments};
+          const maxSubComments = ${numSubComments};
+
+          const clickExpandButtons = () => {
+            const expandBtns = document.querySelectorAll('.show-more');
+            for (const btn of expandBtns) {
+              const text = btn.textContent || '';
+              if (text.includes('展开') && text.includes('条回复')) {
+                btn.scrollIntoView({ block: 'center' });
+                btn.click();
+              }
+            }
+          };
+
+          clickExpandButtons();
+          await new Promise(r => setTimeout(r, 500));
+
+          const getNickname = (item) => {
+            const links = item.querySelectorAll('a[href*="/user/profile/"]');
+            for (const link of links) {
+              const text = link.textContent?.trim() || '';
+              if (text) return text;
+            }
+            return '[deleted]';
+          };
+
           const comments = [];
           const parentComments = document.querySelectorAll('.parent-comment');
+
           for (const parent of parentComments) {
-            const topLevelComments = parent.querySelectorAll(':scope > .comment-item');
-            for (const item of topLevelComments) {
-              if (comments.length >= maxComments) break;
-              const links = item.querySelectorAll('a[href*="/user/profile/"]');
-              let nickname = '[deleted]';
-              for (const link of links) {
-                const text = link.textContent?.trim() || '';
-                if (text) { nickname = text; break; }
-              }
-              const contentEl = item.querySelector('.content');
-              const likeEl = item.querySelector('.like-count');
+            if (comments.length >= maxComments) break;
+
+            const topLevelItem = parent.querySelector(':scope > .comment-item');
+            if (topLevelItem) {
+              const nickname = getNickname(topLevelItem);
+              const contentEl = topLevelItem.querySelector('.content');
+              const likeEl = topLevelItem.querySelector('.like-count');
               comments.push({
                 user: { nickname },
                 content: contentEl?.textContent?.trim() || '',
@@ -349,18 +373,19 @@ cli({
                 isReply: false,
               });
             }
+
             if (comments.length >= maxComments) break;
-            const replyContainers = parent.querySelectorAll(':scope > .reply-container');
-            for (const replyContainer of replyContainers) {
+
+            clickExpandButtons();
+            await new Promise(r => setTimeout(r, 300));
+
+            const replyContainer = parent.querySelector(':scope > .reply-container');
+            if (replyContainer) {
               const replyItems = replyContainer.querySelectorAll('.comment-item');
+              let subCount = 0;
               for (const item of replyItems) {
-                if (comments.length >= maxComments) break;
-                const links = item.querySelectorAll('a[href*="/user/profile/"]');
-                let nickname = '[deleted]';
-                for (const link of links) {
-                  const text = link.textContent?.trim() || '';
-                  if (text) { nickname = text; break; }
-                }
+                if (subCount >= maxSubComments) break;
+                const nickname = getNickname(item);
                 const contentEl = item.querySelector('.content');
                 const likeEl = item.querySelector('.like-count');
                 comments.push({
@@ -369,8 +394,8 @@ cli({
                   liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
                   isReply: true,
                 });
+                subCount++;
               }
-              if (comments.length >= maxComments) break;
             }
           }
           return comments;
