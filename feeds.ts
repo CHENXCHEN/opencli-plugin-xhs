@@ -221,23 +221,26 @@ cli({
   domain: 'www.xiaohongshu.com',
   strategy: Strategy.COOKIE,
   args: [
-    { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL' },
+    { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL (full URL preferred since it contains xsec_token)' },
+    { name: 'xsec-token', type: 'string', help: 'xsec_token (required for comments; not needed if note-id is a full URL with token)' },
     { name: 'comments', type: 'int', default: 20, help: 'Number of comments to fetch' },
     { name: 'load-all-comments', type: 'boolean', default: false, help: 'Load all comments via scrolling' },
   ],
   columns: ['type', 'value'],
   func: async (page, kwargs) => {
     const input = kwargs['note-id'] as string;
+    const xsecTokenArg = (kwargs['xsec-token'] as string) || '';
     const numComments = Math.max(1, Math.min(100, Number(kwargs.comments ?? 20)));
     const loadAllComments = kwargs['load-all-comments'] as boolean;
 
     const { noteId, xsecToken } = parseNoteInput(input);
+    const finalXsecToken = xsecToken || xsecTokenArg;
     if (!noteId) {
       throw new Error('Invalid note ID or URL: ' + input);
     }
 
-    const navigateUrl = xsecToken
-      ? `https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${encodeURIComponent(xsecToken)}`
+    const navigateUrl = finalXsecToken
+      ? `https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${encodeURIComponent(finalXsecToken)}`
       : `https://www.xiaohongshu.com/explore/${noteId}`;
 
     await page.goto(navigateUrl);
@@ -246,7 +249,7 @@ cli({
 
     const storeData = await readNoteFromStore(page);
 
-    if (loadAllComments && xsecToken) {
+    if (loadAllComments && finalXsecToken) {
       await page.evaluate(async () => {
         const scrollToComments = () => {
           const commentSection = document.querySelector('.comments-container, #comment, .comment-container, [class*="comment"]');
@@ -389,7 +392,7 @@ cli({
       rows.push({ type: 'Stats', value: statParts.join(' ') });
     }
 
-    if (xsecToken) {
+    if (finalXsecToken) {
       let commentsData: any[];
       if (loadAllComments) {
         commentsData = await page.evaluate(async (maxComments) => {
