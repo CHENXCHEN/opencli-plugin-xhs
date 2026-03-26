@@ -37,7 +37,7 @@ cli({
     const result = await postComment(page, noteId, content, finalXsecToken);
 
     const rows: Row[] = [];
-    if (result?.code === 0 || result?.success !== false) {
+    if (result?.code === 0 || result?.success === true) {
       rows.push({ type: 'status', value: 'success' });
       rows.push({ type: 'commentId', value: result?.data?.commentId || '' });
     } else {
