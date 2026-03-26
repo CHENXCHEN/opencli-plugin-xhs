@@ -34,15 +34,37 @@ cli({
       return rows;
     }
 
-    const result = await postComment(page, noteId, content, finalXsecToken);
+    await page.goto(`https://www.xiaohongshu.com/explore/${noteId}?xsec_token=${finalXsecToken}`);
+    await page.wait(3);
+
+    const result = await page.evaluate(`
+      (() => {
+        try {
+          const inputArea = document.querySelector('p.content-input, .comment-input, [class*="comment"] input, .input-box');
+          if (!inputArea) {
+            return { code: -1, success: false, error: 'Input area not found' };
+          }
+          inputArea.click();
+          setTimeout(() => {
+            document.execCommand('insertText', false, ${JSON.stringify(content)});
+            const submitBtn = document.querySelector('button.submit, button.btn');
+            if (submitBtn) {
+              submitBtn.click();
+            }
+          }, 500);
+          return { code: 0, success: true };
+        } catch (e) {
+          return { code: -1, success: false, error: String(e) };
+        }
+      })()
+    `);
 
     const rows: Row[] = [];
     if (result?.code === 0 || result?.success === true) {
       rows.push({ type: 'status', value: 'success' });
-      rows.push({ type: 'commentId', value: result?.data?.commentId || '' });
     } else {
       rows.push({ type: 'status', value: 'failed' });
-      rows.push({ type: 'error', value: result?.msg || result?.error || 'unknown' });
+      rows.push({ type: 'error', value: result?.error || 'unknown' });
     }
     return rows;
   },

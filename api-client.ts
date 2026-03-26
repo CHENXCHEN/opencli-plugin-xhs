@@ -42,7 +42,7 @@ export async function fetchComments(
 }
 
 /**
- * Post a comment via API
+ * Post a comment via DOM interaction
  */
 export async function postComment(
   page: any,
@@ -51,42 +51,41 @@ export async function postComment(
   xsecToken: string,
   targetCommentId?: string,
 ): Promise<any> {
-  const apiUrl = `${API_BASE}/comment/post`;
-
-  const body: Record<string, any> = {
-    note_id: noteId,
-    content: content,
-    image_formats: 'jpg,webp,avif',
-  };
-
-  if (targetCommentId) {
-    body.target_comment_id = targetCommentId;
-  }
-
-  const result = await page.evaluate(async ({ apiUrl, body, xsecToken }) => {
+  return await page.evaluate(async ({ content, targetCommentId }) => {
     try {
-      const resp = await fetch(apiUrl, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-s:token': xsecToken,
-          'x-s:version': '1.0',
-          'Referer': `https://www.xiaohongshu.com/explore/${body.note_id}`,
-        },
-        body: JSON.stringify(body),
-      });
-      return await resp.json();
-    } catch (e) {
-      return { success: false, error: String(e) };
-    }
-  }, { apiUrl, body, xsecToken });
+      if (targetCommentId) {
+        const commentEl = document.querySelector(`[id="comment-${targetCommentId}"], [data-comment-id="${targetCommentId}"]`);
+        if (commentEl) {
+          const replyBtn = commentEl.querySelector('.reply-btn, [class*="reply"]');
+          if (replyBtn) {
+            (replyBtn as HTMLElement).click();
+          }
+        }
+      }
 
-  return result;
+      const inputArea = document.querySelector('p.content-input');
+      if (inputArea) {
+        inputArea.focus();
+        document.execCommand('selectAll', false);
+        document.execCommand('insertText', false, content);
+        inputArea.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      const submitBtn = document.querySelector('button.submit');
+      if (submitBtn) {
+        (submitBtn as HTMLElement).click();
+        return { code: 0, success: true };
+      }
+
+      return { code: -1, success: false, error: 'Submit button not found' };
+    } catch (e) {
+      return { code: -1, success: false, error: String(e) };
+    }
+  }, { content, targetCommentId });
 }
 
 /**
- * Like a note via API
+ * Like a note via DOM click
  */
 export async function likeNote(
   page: any,
@@ -94,32 +93,22 @@ export async function likeNote(
   xsecToken: string,
   like: boolean = true,
 ): Promise<any> {
-  const apiUrl = `${API_BASE}/like`;
-
-  const result = await page.evaluate(async ({ apiUrl, noteId, like, xsecToken }) => {
+  return await page.evaluate(async ({ noteId, like }) => {
     try {
-      const resp = await fetch(apiUrl, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-s:token': xsecToken,
-          'x-s:version': '1.0',
-          'Referer': `https://www.xiaohongshu.com/explore/${noteId}`,
-        },
-        body: JSON.stringify({ note_id: noteId, action: like ? 'like' : 'unlike' }),
-      });
-      return await resp.json();
+      const likeBtn = document.querySelector('.interact-container .left .like-lottie, .interactions .like-btn, [class*="like"]');
+      if (likeBtn) {
+        (likeBtn as HTMLElement).click();
+        return { success: true, action: like ? 'liked' : 'unliked' };
+      }
+      return { success: false, error: 'Like button not found' };
     } catch (e) {
       return { success: false, error: String(e) };
     }
-  }, { apiUrl, noteId, like, xsecToken });
-
-  return result;
+  }, { noteId, like });
 }
 
 /**
- * Collect (favorite) a note via API
+ * Collect (favorite) a note via DOM click
  */
 export async function collectNote(
   page: any,
@@ -127,28 +116,18 @@ export async function collectNote(
   xsecToken: string,
   collect: boolean = true,
 ): Promise<any> {
-  const apiUrl = `${API_BASE}/collect`;
-
-  const result = await page.evaluate(async ({ apiUrl, noteId, collect, xsecToken }) => {
+  return await page.evaluate(async ({ noteId, collect }) => {
     try {
-      const resp = await fetch(apiUrl, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-s:token': xsecToken,
-          'x-s:version': '1.0',
-          'Referer': `https://www.xiaohongshu.com/explore/${noteId}`,
-        },
-        body: JSON.stringify({ note_id: noteId, action: collect ? 'collect' : 'uncollect' }),
-      });
-      return await resp.json();
+      const collectBtn = document.querySelector('.interact-container .left .reds-icon.collect-icon, .interactions .collect-btn, [class*="collect"]');
+      if (collectBtn) {
+        (collectBtn as HTMLElement).click();
+        return { success: true, action: collect ? 'collected' : 'uncollected' };
+      }
+      return { success: false, error: 'Collect button not found' };
     } catch (e) {
       return { success: false, error: String(e) };
     }
-  }, { apiUrl, noteId, collect, xsecToken });
-
-  return result;
+  }, { noteId, collect });
 }
 
 /**
