@@ -14,16 +14,16 @@ cli({
   domain: 'www.xiaohongshu.com',
   strategy: Strategy.COOKIE,
   args: [
-    { name: 'note-id', positional: true, required: true, help: 'Note ID or URL' },
+    { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL' },
     { name: 'action', type: 'string', default: 'like', choices: ['like', 'unlike'], help: 'like or unlike' },
-    { name: 'xsec_token', type: 'string', help: 'xsec_token (auto-detected)' },
+    { name: 'xsec-token', positional: true, required: false, help: 'xsec_token (auto-detected)' },
   ],
   columns: ['status', 'value'],
   func: async (page, kwargs) => {
     const noteInput = kwargs['note-id'] as string;
     const action = (kwargs.action as string) || 'like';
     const isLike = action === 'like';
-    let xsecToken = (kwargs.xsec_token as string) || '';
+    let xsecToken = (kwargs['xsec-token'] as string) || '';
 
     const { noteId } = parseNoteInput(noteInput);
     if (!xsecToken) {
@@ -65,16 +65,16 @@ cli({
   domain: 'www.xiaohongshu.com',
   strategy: Strategy.COOKIE,
   args: [
-    { name: 'note-id', positional: true, required: true, help: 'Note ID or URL' },
+    { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL' },
     { name: 'action', type: 'string', default: 'collect', choices: ['collect', 'uncollect'], help: 'collect or uncollect' },
-    { name: 'xsec_token', type: 'string', help: 'xsec_token (auto-detected)' },
+    { name: 'xsec-token', positional: true, required: false, help: 'xsec_token (auto-detected)' },
   ],
   columns: ['status', 'value'],
   func: async (page, kwargs) => {
     const noteInput = kwargs['note-id'] as string;
     const action = (kwargs.action as string) || 'collect';
     const isCollect = action === 'collect';
-    let xsecToken = (kwargs.xsec_token as string) || '';
+    let xsecToken = (kwargs['xsec-token'] as string) || '';
 
     const { noteId } = parseNoteInput(noteInput);
     if (!xsecToken) {

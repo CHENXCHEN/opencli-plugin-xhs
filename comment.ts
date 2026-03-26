@@ -14,15 +14,15 @@ cli({
   domain: 'www.xiaohongshu.com',
   strategy: Strategy.COOKIE,
   args: [
-    { name: 'note-id', positional: true, required: true, help: 'Note ID or URL' },
+    { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL' },
     { name: 'content', positional: true, required: true, help: 'Comment content' },
-    { name: 'xsec_token', type: 'string', help: 'xsec_token (auto-detected from URL if note-id is URL)' },
+    { name: 'xsec-token', positional: true, required: false, help: 'xsec_token (auto-detected from URL)' },
   ],
   columns: ['status', 'value'],
   func: async (page, kwargs) => {
     const noteInput = kwargs['note-id'] as string;
     const content = kwargs.content as string;
-    let xsecToken = (kwargs.xsec_token as string) || '';
+    let xsecToken = (kwargs['xsec-token'] as string) || '';
 
     const { noteId } = parseNoteInput(noteInput);
     if (!xsecToken) {
@@ -63,17 +63,17 @@ cli({
   domain: 'www.xiaohongshu.com',
   strategy: Strategy.COOKIE,
   args: [
-    { name: 'note-id', positional: true, required: true, help: 'Note ID or URL' },
+    { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL' },
     { name: 'comment-id', positional: true, required: true, help: 'Comment ID to reply to' },
     { name: 'content', positional: true, required: true, help: 'Reply content' },
-    { name: 'xsec_token', type: 'string', help: 'xsec_token (auto-detected from URL if note-id is URL)' },
+    { name: 'xsec-token', positional: true, required: false, help: 'xsec_token (auto-detected from URL)' },
   ],
   columns: ['status', 'value'],
   func: async (page, kwargs) => {
     const noteInput = kwargs['note-id'] as string;
     const commentId = kwargs['comment-id'] as string;
     const content = kwargs.content as string;
-    let xsecToken = (kwargs.xsec_token as string) || '';
+    let xsecToken = (kwargs['xsec-token'] as string) || '';
 
     const { noteId } = parseNoteInput(noteInput);
     if (!xsecToken) {

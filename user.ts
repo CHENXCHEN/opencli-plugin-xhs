@@ -14,13 +14,13 @@ cli({
   strategy: Strategy.COOKIE,
   args: [
     { name: 'user-id', positional: true, required: true, help: 'User ID or profile URL' },
-    { name: 'xsec_token', type: 'string', help: 'xsec_token for accessing restricted profiles' },
+    { name: 'xsec-token', positional: true, required: false, help: 'xsec_token for restricted profiles' },
   ],
   columns: ['field', 'value'],
   func: async (page, kwargs) => {
     const input = kwargs['user-id'] as string;
     const userId = parseUserInput(input);
-    const xsecToken = (kwargs.xsec_token as string) || '';
+    const xsecToken = (kwargs['xsec-token'] as string) || '';
 
     const profileUrl = xsecToken
       ? `https://www.xiaohongshu.com/user/profile/${userId}?xsec_token=${encodeURIComponent(xsecToken)}`
@@ -160,14 +160,14 @@ cli({
   strategy: Strategy.COOKIE,
   args: [
     { name: 'user-id', positional: true, required: true, help: 'User ID or profile URL' },
-    { name: 'xsec_token', type: 'string', help: 'xsec_token for accessing restricted profiles' },
+    { name: 'xsec-token', positional: true, required: false, help: 'xsec_token for restricted profiles' },
     { name: 'limit', type: 'int', default: 20, help: 'Number of notes to fetch' },
   ],
   columns: ['noteId', 'type', 'title', 'desc', 'likes', 'time'],
   func: async (page, kwargs) => {
     const input = kwargs['user-id'] as string;
     const userId = parseUserInput(input);
-    const xsecToken = (kwargs.xsec_token as string) || '';
+    const xsecToken = (kwargs['xsec-token'] as string) || '';
     const limit = Math.min(100, Math.max(1, Number(kwargs.limit ?? 20)));
 
     const profileUrl = xsecToken
