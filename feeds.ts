@@ -221,8 +221,8 @@ cli({
   domain: 'www.xiaohongshu.com',
   strategy: Strategy.COOKIE,
   args: [
-    { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL (full URL preferred since it contains xsec_token)' },
-    { name: 'xsec-token', type: 'string', help: 'xsec_token (required for comments; not needed if note-id is a full URL with token)' },
+    { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL' },
+    { name: 'xsec-token', positional: true, required: false, help: 'xsec_token (optional, not needed if note-id is a full URL)' },
     { name: 'comments', type: 'int', default: 20, help: 'Number of comments to fetch' },
     { name: 'load-all-comments', type: 'boolean', default: false, help: 'Load all comments via scrolling' },
   ],
