@@ -52,8 +52,6 @@ cli({
     
     await page.wait(3);
     
-    await page.wait(1);
-    
     await page.evaluate(`
       (() => {
         const inputArea = document.querySelector('#content-textarea');
