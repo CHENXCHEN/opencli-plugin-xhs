@@ -224,6 +224,7 @@ cli({
     { name: 'note-id', positional: true, required: true, help: 'Note ID or full URL' },
     { name: 'xsec-token', positional: true, required: false, help: 'xsec_token (optional, not needed if note-id is a full URL)' },
     { name: 'comments', type: 'int', default: 20, help: 'Number of comments to fetch' },
+    { name: 'sub-comments', type: 'int', default: 10, help: 'Number of sub-comments (replies) to load per comment' },
     { name: 'load-all-comments', type: 'boolean', default: false, help: 'Load all comments via scrolling' },
   ],
   columns: ['type', 'value'],
@@ -231,6 +232,7 @@ cli({
     const input = kwargs['note-id'] as string;
     const xsecTokenArg = (kwargs['xsec-token'] as string) || '';
     const numComments = Math.max(1, Math.min(100, Number(kwargs.comments ?? 20)));
+    const numSubComments = Math.max(0, Math.min(50, Number(kwargs['sub-comments'] ?? 10)));
     const loadAllComments = kwargs['load-all-comments'] as boolean;
 
     const { noteId, xsecToken } = parseNoteInput(input);
@@ -250,7 +252,7 @@ cli({
     const storeData = await readNoteFromStore(page);
 
     if (loadAllComments && finalXsecToken) {
-      await page.evaluate(async () => {
+      await page.evaluate(async (maxSubComments) => {
         const scrollToComments = () => {
           const commentSection = document.querySelector('.comments-container, #comment, .comment-container, [class*="comment"]');
           if (commentSection) {
@@ -274,6 +276,22 @@ cli({
           return clicked;
         };
 
+        const clickExpandReplies = () => {
+          const expandButtons = document.querySelectorAll('.reply-container [class*="expand"], .reply-container [class*="show-more"], .reply-container [class*="展开"]');
+          let clicked = false;
+          for (const btn of expandButtons) {
+            const text = btn.textContent || '';
+            if (text.includes('展开') && text.includes('条回复')) {
+              const rect = btn.getBoundingClientRect();
+              if (rect.top > 0 && rect.top < window.innerHeight * 3) {
+                (btn as HTMLElement).click();
+                clicked = true;
+              }
+            }
+          }
+          return clicked;
+        };
+
         const isAtEnd = () => {
           const endMarker = document.querySelector('.end-container, .the-end, [class*="end"]');
           if (endMarker) return true;
@@ -292,6 +310,7 @@ cli({
           if (isAtEnd()) break;
 
           clickShowMore();
+          clickExpandReplies();
           await new Promise(r => setTimeout(r, 300));
 
           window.scrollBy(0, window.innerHeight * 0.8);
@@ -312,7 +331,7 @@ cli({
           }
           lastCount = commentCount;
         }
-      });
+      }, numSubComments);
       await page.wait(2);
     }
 
@@ -398,6 +417,7 @@ cli({
         commentsData = await page.evaluate(`
           (() => {
             const maxComments = ${numComments};
+            const maxSubComments = ${numSubComments};
             const comments = [];
             const parentComments = document.querySelectorAll('.parent-comment');
             for (const parent of parentComments) {
@@ -417,14 +437,18 @@ cli({
                   content: contentEl?.textContent?.trim() || '',
                   liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
                   isReply: false,
+                  subCount: 0,
                 });
               }
               if (comments.length >= maxComments) break;
               const replyContainers = parent.querySelectorAll(':scope > .reply-container');
+              let subCommentCount = 0;
               for (const replyContainer of replyContainers) {
+                if (subCommentCount >= maxSubComments) break;
                 const replyItems = replyContainer.querySelectorAll('.comment-item');
                 for (const item of replyItems) {
                   if (comments.length >= maxComments) break;
+                  if (subCommentCount >= maxSubComments) break;
                   const links = item.querySelectorAll('a[href*="/user/profile/"]');
                   let nickname = '[deleted]';
                   for (const link of links) {
@@ -438,9 +462,10 @@ cli({
                     content: contentEl?.textContent?.trim() || '',
                     liked_count: parseInt(likeEl?.textContent?.replace(/[^0-9]/g, '') || '0'),
                     isReply: true,
+                    subCount: subCommentCount + 1,
                   });
+                  subCommentCount++;
                 }
-                if (comments.length >= maxComments) break;
               }
             }
             return comments;
