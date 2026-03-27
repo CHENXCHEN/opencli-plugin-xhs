@@ -21,6 +21,19 @@
 | `publish` ⚠️ | 发布图文笔记（⚠️未测试） |
 | `publish-video` ⚠️ | 发布视频笔记（⚠️未测试） |
 
+## 安装
+
+```bash
+# 安装依赖
+pnpm install esbuild -g
+
+# 安装插件
+opencli plugin install github:CHENXCHEN/opencli-plugin-xhs
+
+# 使用插件
+opencli xhs --help
+```
+
 ## 使用方法
 
 > **注意**: 带有 `[xsec-token]` 的命令需要从笔记 URL 中提取，例如：`https://www.xiaohongshu.com/explore/xxx?xsec_token=ABC123`，其中 `ABC123` 即为 xsec_token。
