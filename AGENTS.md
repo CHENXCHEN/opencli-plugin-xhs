@@ -235,16 +235,13 @@ playwright_browser_evaluate(`
 
 **目标**：将代码复制到插件目录，编译后用 opencli 命令测试
 
-### 4.1 复制并编译
+### 4.1 编译并复制到插件目录
 ```bash
-# 一键复制并编译（推荐）
-npm run prepare
+# 一键编译并安装（推荐）
+npm run plugin
 
-# 或手动执行
-cp *.ts ~/.opencli/plugins/xhs/
-for f in api-client auth check-login comment feeds interaction publish url-parser user; do
-  esbuild ~/.opencli/plugins/xhs/${f}.ts --bundle --outfile=~/.opencli/plugins/xhs/${f}.js --format=esm --platform=node '--external:@jackwener/*'
-done
+# 仅编译（不复制）
+npm run prepare
 ```
 
 ### 4.2 测试命令

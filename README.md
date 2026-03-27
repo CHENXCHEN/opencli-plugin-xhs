@@ -81,7 +81,7 @@ opencli xhs publish-video <title> <content> <video-path>        # 发布视频
 
 2. **构建并安装到插件目录**：
    ```bash
-   npm run prepare
+   npm run plugin
    ```
 
 3. **测试**：
