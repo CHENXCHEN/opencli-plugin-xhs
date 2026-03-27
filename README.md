@@ -4,60 +4,57 @@
 
 ## 支持的命令
 
-| 命令 | 描述 |
-|------|------|
-| `check-login` | 检查当前登录状态 |
-| `qrcode` | 获取登录二维码（扫码登录） |
-| `delete-cookies` | 清除 cookies（退出登录） |
-| `feeds` | 获取首页推荐内容列表 |
-| `search` | 搜索笔记/用户/标签 |
-| `detail` | 获取笔记详情（作者、内容、图片、视频、评论） |
-| `user` | 获取用户主页信息 |
-| `comment` | 对笔记发表评论 |
-| `reply` | 回复笔记下的评论 |
-| `like` | 点赞/取消点赞笔记 |
-| `favorite` | 收藏/取消收藏笔记 |
-| `publish` | 发布图文笔记 |
-| `publish-video` | 发布视频笔记 |
+| 命令 | 必填参数 | 可选参数 | 描述 |
+|------|----------|----------|------|
+| `check-login` | | | 检查当前登录状态 |
+| `qrcode` | | | 获取登录二维码（扫码登录） |
+| `delete-cookies` | | | 清除 cookies（退出登录） |
+| `feeds` | | `--limit` | 获取首页推荐内容列表 |
+| `search` | `<keyword>` | `--type`, `--sort` | 搜索笔记/用户/标签 |
+| `detail` | `<note-id>` | `[xsec-token]`, `--comments` | 获取笔记详情 |
+| `user` | `<user-id>` | `[xsec-token]` | 获取用户主页信息 |
+| `user-notes` | `<user-id>` | `[xsec-token]` | 获取用户笔记列表 |
+| `comment` | `<note-id>`, `<content>` | `[xsec-token]` | 对笔记发表评论 |
+| `reply` | `<note-id>`, `<comment-id>`, `<content>` | `[xsec-token]` | 回复评论 |
+| `like` | `<note-id>` | `[xsec-token]`, `--action` | 点赞/取消点赞 |
+| `favorite` | `<note-id>` | `[xsec-token]`, `--action` | 收藏/取消收藏 |
+| `publish` | `<title>`, `<content>` | `--tags` | 发布图文笔记 |
+| `publish-video` | `<title>`, `<content>`, `<video>` | | 发布视频笔记 |
 
 ## 使用方法
 
 ```bash
-# 检查登录状态
-opencli xhs check-login
+# 认证
+opencli xhs check-login                          # 检查登录状态
+opencli xhs qrcode                              # 获取登录二维码
+opencli xhs delete-cookies                      # 退出登录
 
-# 获取首页推荐
-opencli xhs feeds
+# 内容浏览
+opencli xhs feeds                               # 首页推荐
 opencli xhs feeds --limit 10
-
-# 搜索内容
-opencli xhs search "关键词"
+opencli xhs search "关键词"                      # 搜索
 opencli xhs search "关键词" --type note --sort hot
-
-# 获取笔记详情
-opencli xhs detail <note-id-or-url>
+opencli xhs detail <note-id-or-url>              # 笔记详情
 opencli xhs detail <note-id-or-url> --comments 50
 
-# 获取用户信息
-opencli xhs user <user-id-or-url>
+# 用户
+opencli xhs user <user-id-or-url>               # 用户信息
+opencli xhs user-notes <user-id-or-url>         # 用户笔记列表
 
-# 发表评论
-opencli xhs comment <note-id> <content>
+# 评论
+opencli xhs comment <note-id> [xsec-token] <content>                    # 发表评论
+opencli xhs reply <note-id> <comment-id> <content> [xsec-token]         # 回复评论
 
-# 回复评论
-opencli xhs reply <note-id> <comment-id> <content>
+# 互动
+opencli xhs like <note-id> [xsec-token]                            # 点赞
+opencli xhs like <note-id> [xsec-token] --action unlike           # 取消点赞
+opencli xhs favorite <note-id> [xsec-token]                       # 收藏
+opencli xhs favorite <note-id> [xsec-token] --action uncollect    # 取消收藏
 
-# 点赞
-opencli xhs like <note-id>
-opencli xhs like <note-id> --action unlike
-
-# 收藏
-opencli xhs favorite <note-id>
-opencli xhs favorite <note-id> --action uncollect
-
-# 发布图文
-opencli xhs publish <title> <content>
+# 发布
+opencli xhs publish <title> <content>                           # 发布图文
 opencli xhs publish <title> <content> --tags "tag1,tag2"
+opencli xhs publish-video <title> <content> <video-path>        # 发布视频
 ```
 
 ## 开发
@@ -65,16 +62,15 @@ opencli xhs publish <title> <content> --tags "tag1,tag2"
 ### 项目结构
 
 ```
-├── index.ts          # 入口文件，导入所有命令
-├── auth.ts           # 类型定义
+├── comment.ts        # 评论命令（comment/reply）
+├── feeds.ts          # Feed 命令（feeds/search/detail）
+├── user.ts           # 用户命令（user/user-notes）
+├── check-login.ts    # 认证命令
+├── interaction.ts    # 互动命令（like/favorite）
+├── publish.ts        # 发布命令
 ├── url-parser.ts     # URL 解析工具
 ├── api-client.ts     # API 调用封装
-├── check-login.ts    # 认证命令
-├── feeds.ts          # Feed 命令（feeds/search/detail）
-├── user.ts           # 用户命令
-├── comment.ts        # 评论命令
-├── interaction.ts    # 互动命令（like/favorite）
-└── publish.ts        # 发布命令
+└── auth.ts           # 类型定义
 ```
 
 ### 开发工作流
