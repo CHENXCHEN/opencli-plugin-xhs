@@ -4,22 +4,22 @@
 
 ## 支持的命令
 
-| 命令 | 必填参数 | 可选参数 | 描述 |
-|------|----------|----------|------|
-| `check-login` | | | 检查当前登录状态 |
-| `qrcode` | | | 获取登录二维码（扫码登录） |
-| `delete-cookies` | | | 清除 cookies（退出登录） |
-| `feeds` | | `--limit` | 获取首页推荐内容列表 |
-| `search` | `<keyword>` | `--type`, `--sort` | 搜索笔记/用户/标签 |
-| `detail` | `<note-id>` | `[xsec-token]`, `--comments` | 获取笔记详情 |
-| `user` | `<user-id>` | `[xsec-token]` | 获取用户主页信息 |
-| `user-notes` | `<user-id>` | `[xsec-token]` | 获取用户笔记列表 |
-| `comment` | `<note-id>`, `<content>` | `[xsec-token]` | 对笔记发表评论 |
-| `reply` ⚠️ | `<note-id>`, `<comment-id>`, `<content>` | `[xsec-token]` | 回复评论（⚠️未测试） |
-| `like` | `<note-id>` | `[xsec-token]`, `--action` | 点赞/取消点赞 |
-| `favorite` | `<note-id>` | `[xsec-token]`, `--action` | 收藏/取消收藏 |
-| `publish` | `<title>`, `<content>` | `--tags` | 发布图文笔记 |
-| `publish-video` | `<title>`, `<content>`, `<video>` | | 发布视频笔记 |
+| 命令 | 描述 |
+|------|------|
+| `check-login` | 检查当前登录状态 |
+| `qrcode` | 获取登录二维码（扫码登录） |
+| `delete-cookies` | 清除 cookies（退出登录） |
+| `feeds` | 获取首页推荐内容列表 |
+| `search` | 搜索笔记/用户/标签 |
+| `detail` | 获取笔记详情 |
+| `user` | 获取用户主页信息 |
+| `user-notes` | 获取用户笔记列表 |
+| `comment` | 对笔记发表评论 |
+| `reply` ⚠️ | 回复评论（⚠️未测试） |
+| `like` | 点赞/取消点赞 |
+| `favorite` | 收藏/取消收藏 |
+| `publish` ⚠️ | 发布图文笔记（⚠️未测试） |
+| `publish-video` ⚠️ | 发布视频笔记（⚠️未测试） |
 
 ## 使用方法
 
