@@ -15,13 +15,15 @@
 | `user` | `<user-id>` | `[xsec-token]` | 获取用户主页信息 |
 | `user-notes` | `<user-id>` | `[xsec-token]` | 获取用户笔记列表 |
 | `comment` | `<note-id>`, `<content>` | `[xsec-token]` | 对笔记发表评论 |
-| `reply` | `<note-id>`, `<comment-id>`, `<content>` | `[xsec-token]` | 回复评论 |
+| `reply` ⚠️ | `<note-id>`, `<comment-id>`, `<content>` | `[xsec-token]` | 回复评论（⚠️未测试） |
 | `like` | `<note-id>` | `[xsec-token]`, `--action` | 点赞/取消点赞 |
 | `favorite` | `<note-id>` | `[xsec-token]`, `--action` | 收藏/取消收藏 |
 | `publish` | `<title>`, `<content>` | `--tags` | 发布图文笔记 |
 | `publish-video` | `<title>`, `<content>`, `<video>` | | 发布视频笔记 |
 
 ## 使用方法
+
+> **注意**: 带有 `[xsec-token]` 的命令需要从笔记 URL 中提取，例如：`https://www.xiaohongshu.com/explore/xxx?xsec_token=ABC123`，其中 `ABC123` 即为 xsec_token。
 
 ```bash
 # 认证
@@ -34,8 +36,8 @@ opencli xhs feeds                               # 首页推荐
 opencli xhs feeds --limit 10
 opencli xhs search "关键词"                      # 搜索
 opencli xhs search "关键词" --type note --sort hot
-opencli xhs detail <note-id-or-url>              # 笔记详情
-opencli xhs detail <note-id-or-url> --comments 50
+opencli xhs detail <note-id-or-url> [xsec-token]              # 笔记详情
+opencli xhs detail <note-id-or-url> [xsec-token] --comments 50
 
 # 用户
 opencli xhs user <user-id-or-url>               # 用户信息
