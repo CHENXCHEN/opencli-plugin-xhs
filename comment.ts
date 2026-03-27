@@ -71,12 +71,29 @@ cli({
     }
     
     await page.wait(2);
-    
+
+    // Find the new comment ID by matching posted content
+    const newCommentId = await page.evaluate(`
+      (() => {
+        const comments = document.querySelectorAll('[id^="comment-"]');
+        for (const comment of comments) {
+          const contentEl = comment.querySelector('[class*="content"]');
+          if (contentEl && contentEl.textContent.includes('${escapedContent.substring(0, 30)}')) {
+            return comment.id.replace('comment-', '');
+          }
+        }
+        return null;
+      })()
+    `);
+
     const result = { code: 0, success: true };
 
     const rows: Row[] = [];
     if (result?.code === 0) {
       rows.push({ type: 'status', value: 'success' });
+      if (newCommentId) {
+        rows.push({ type: 'commentId', value: newCommentId });
+      }
     } else {
       rows.push({ type: 'status', value: 'failed' });
       rows.push({ type: 'error', value: result?.error || 'unknown' });
