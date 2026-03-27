@@ -79,30 +79,18 @@ opencli xhs publish <title> <content> --tags "tag1,tag2"
 
 ### 开发工作流
 
-1. **编辑源文件** - 修改 `commands/` 目录下的 `.ts` 文件
+1. **编辑源文件** - 修改根目录下的 `.ts` 文件（如 `comment.ts`、`feeds.ts` 等）
 
-2. **编译打包** - 将所有命令打包成单个 `index.js`：
+2. **构建并安装到插件目录**：
    ```bash
-   npx esbuild index.ts --bundle --outfile=index.js --format=esm --platform=node
+   npm run prepare
    ```
 
-3. **安装到插件目录**：
-   ```bash
-   cp index.js ~/.opencli/plugins/xhs/
-   ```
-
-4. **测试**：
+3. **测试**：
    ```bash
    opencli xhs --help
    opencli xhs check-login
    ```
-
-### 重新构建命令参考
-
-```bash
-# 编译并复制到插件目录
-npx esbuild index.ts --bundle --outfile=index.js --format=esm --platform=node && cp index.js ~/.opencli/plugins/xhs/
-```
 
 ## 依赖
 
