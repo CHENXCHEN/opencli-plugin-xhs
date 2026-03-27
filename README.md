@@ -12,6 +12,7 @@
 | `feeds` | 获取首页推荐内容列表 | plugin |
 | `search` | 搜索笔记/用户/标签 | plugin |
 | `detail` | 获取笔记详情 | plugin |
+| `notifications` | 获取通知消息 | [opencli](https://github.com/jackwener/opencli) |
 | `user` | 获取用户主页信息 | plugin |
 | `user-notes` | 获取用户笔记列表 | plugin |
 | `comment` | 对笔记发表评论 | plugin |
@@ -57,6 +58,10 @@ opencli xhs search "关键词"                      # 搜索
 opencli xhs search "关键词" --type note --sort hot
 opencli xhs detail <note-id-or-url> [xsec-token]              # 笔记详情
 opencli xhs detail <note-id-or-url> [xsec-token] --comments 50
+opencli xhs notifications                           # 通知（@提及）
+opencli xhs notifications --type likes             # 点赞通知
+opencli xhs notifications --type connections        # 好友通知
+opencli xhs notifications --limit 50               # 获取50条
 
 # 用户
 opencli xhs user <user-id-or-url>               # 用户信息

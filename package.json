@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "prepare": "for f in api-client auth check-login comment creator-note-detail creator-notes creator-notes-summary creator-profile creator-stats download feeds interaction publish url-parser user; do esbuild ${f}.ts --bundle --outfile=${f}.js --format=esm --platform=node '--external:@jackwener/*'; done",
-    "plugin": "npm run prepare && cp *.js ~/.opencli/plugins/xhs/"
+    "plugin": "npm run prepare && (cp *.js ~/.opencli/plugins/xhs/; cp *.yaml ~/.opencli/plugins/xhs/ 2>/dev/null || true)"
   },
   "peerDependencies": {
     "@jackwener/opencli": ">=1.0.0"
