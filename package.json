@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "prepare": "cp *.ts ~/.opencli/plugins/xhs/ && for f in api-client auth check-login comment feeds interaction publish url-parser user; do esbuild ~/.opencli/plugins/xhs/${f}.ts --bundle --outfile=~/.opencli/plugins/xhs/${f}.js --format=esm --platform=node '--external:@jackwener/*'; done"
+    "prepare": "for f in api-client auth check-login comment feeds interaction publish url-parser user; do esbuild ${f}.ts --bundle --outfile=${f}.js --format=esm --platform=node '--external:@jackwener/*'; done",
+    "plugin": "npm run prepare && cp *.js ~/.opencli/plugins/xhs/"
   },
   "peerDependencies": {
     "@jackwener/opencli": ">=1.0.0"
