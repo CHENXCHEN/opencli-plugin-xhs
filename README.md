@@ -37,6 +37,9 @@ pnpm install esbuild -g
 # 安装插件
 opencli plugin install github:CHENXCHEN/opencli-plugin-xhs
 
+# 更新插件
+opencli plugin update xhs
+
 # 使用插件
 opencli xhs --help
 ```
