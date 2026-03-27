@@ -4,22 +4,28 @@
 
 ## 支持的命令
 
-| 命令 | 描述 |
-|------|------|
-| `check-login` | 检查当前登录状态 |
-| `qrcode` | 获取登录二维码（扫码登录） |
-| `delete-cookies` | 清除 cookies（退出登录） |
-| `feeds` | 获取首页推荐内容列表 |
-| `search` | 搜索笔记/用户/标签 |
-| `detail` | 获取笔记详情 |
-| `user` | 获取用户主页信息 |
-| `user-notes` | 获取用户笔记列表 |
-| `comment` | 对笔记发表评论 |
-| `reply` ⚠️ | 回复评论（⚠️未测试） |
-| `like` | 点赞/取消点赞 |
-| `favorite` | 收藏/取消收藏 |
-| `publish` ⚠️ | 发布图文笔记（⚠️未测试） |
-| `publish-video` ⚠️ | 发布视频笔记（⚠️未测试） |
+| 命令 | 描述 | 来源 |
+|------|------|------|
+| `check-login` | 检查当前登录状态 | plugin |
+| `qrcode` | 获取登录二维码（扫码登录） | plugin |
+| `delete-cookies` | 清除 cookies（退出登录） | plugin |
+| `feeds` | 获取首页推荐内容列表 | plugin |
+| `search` | 搜索笔记/用户/标签 | plugin |
+| `detail` | 获取笔记详情 | plugin |
+| `user` | 获取用户主页信息 | plugin |
+| `user-notes` | 获取用户笔记列表 | plugin |
+| `comment` | 对笔记发表评论 | plugin |
+| `reply` ⚠️ | 回复评论（⚠️未测试） | plugin |
+| `like` | 点赞/取消点赞 | plugin |
+| `favorite` | 收藏/取消收藏 | plugin |
+| `publish` ⚠️ | 发布图文笔记（⚠️未测试） | plugin |
+| `publish-video` ⚠️ | 发布视频笔记（⚠️未测试） | plugin |
+| `download` | 提取笔记中的图片/视频 URL | [opencli](https://github.com/jackwener/opencli) |
+| `creator-notes` | 创作者笔记列表 + 数据 | [opencli](https://github.com/jackwener/opencli) |
+| `creator-note-detail` | 单篇笔记详细数据 | [opencli](https://github.com/jackwener/opencli) |
+| `creator-notes-summary` | 批量笔记摘要 | [opencli](https://github.com/jackwener/opencli) |
+| `creator-profile` | 创作者账号信息 | [opencli](https://github.com/jackwener/opencli) |
+| `creator-stats` | 创作者数据总览 | [opencli](https://github.com/jackwener/opencli) |
 
 ## 安装
 
@@ -70,6 +76,19 @@ opencli xhs favorite <note-id> [xsec-token] --action uncollect    # 取消收藏
 opencli xhs publish <title> <content>                           # 发布图文
 opencli xhs publish <title> <content> --tags "tag1,tag2"
 opencli xhs publish-video <title> <content> <video-path>        # 发布视频
+
+# 创作者中心（需登录 creator.xiaohongshu.com）
+opencli xhs creator-profile                       # 创作者账号信息
+opencli xhs creator-stats                        # 7天数据总览
+opencli xhs creator-stats --period thirty         # 30天数据总览
+opencli xhs creator-notes                        # 创作者笔记列表
+opencli xhs creator-notes --limit 10             # 获取10篇笔记
+opencli xhs creator-note-detail <note-id>        # 单篇笔记详细数据
+opencli xhs creator-notes-summary                # 最近3篇笔记批量摘要
+opencli xhs creator-notes-summary --limit 5      # 最近5篇笔记批量摘要
+
+# 下载
+opencli xhs download <note-id-or-url>            # 提取笔记中的图片/视频 URL
 ```
 
 ## 开发
